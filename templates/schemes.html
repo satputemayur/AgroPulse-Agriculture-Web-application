@@ -1,0 +1,639 @@
+{% extends "base.html" %}
+
+{% block title %}Government Schemes - AgroPulse{% endblock %}
+<!-- ============================================ -->
+<!-- COPY EVERYTHING BELOW AND PASTE BEFORE </body> TAG -->
+<!-- ============================================ -->
+
+<style>
+/* Floating Chat Bubble */
+.cropwise-chat-bubble {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 65px;
+    height: 65px;
+    background: linear-gradient(135deg, #4caf50, #66bb6a);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 5px 25px rgba(76, 175, 80, 0.5);
+    transition: all 0.3s;
+    z-index: 9998;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 5px 25px rgba(76, 175, 80, 0.5); }
+    50% { box-shadow: 0 5px 35px rgba(76, 175, 80, 0.8); }
+}
+
+.cropwise-chat-bubble:hover {
+    transform: scale(1.1);
+}
+
+.cropwise-chat-bubble-icon {
+    font-size: 2.2rem;
+}
+
+/* Chat Window */
+.cropwise-chat-window {
+    position: fixed;
+    bottom: 110px;
+    right: 30px;
+    width: 400px;
+    height: 600px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
+    display: none;
+    flex-direction: column;
+    z-index: 9999;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.cropwise-chat-window.active {
+    display: flex;
+}
+
+.cropwise-chat-header {
+    background: linear-gradient(135deg, #4caf50, #66bb6a);
+    color: white;
+    padding: 18px 20px;
+    border-radius: 20px 20px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cropwise-chat-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.cropwise-chat-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+.cropwise-chat-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+.cropwise-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: #f8f9fa;
+}
+
+.cropwise-chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.cropwise-chat-messages::-webkit-scrollbar-thumb {
+    background: #4caf50;
+    border-radius: 3px;
+}
+
+.cropwise-message {
+    margin-bottom: 15px;
+    display: flex;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.cropwise-message.user {
+    justify-content: flex-end;
+}
+
+.cropwise-message-content {
+    max-width: 75%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    word-wrap: break-word;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.cropwise-message.bot .cropwise-message-content {
+    background: white;
+    color: #333;
+    border: 2px solid #4caf50;
+}
+
+.cropwise-message.user .cropwise-message-content {
+    background: linear-gradient(135deg, #4caf50, #66bb6a);
+    color: white;
+}
+
+.cropwise-typing {
+    display: none;
+    padding: 12px 16px;
+    background: white;
+    border: 2px solid #4caf50;
+    border-radius: 18px;
+    width: fit-content;
+}
+
+.cropwise-typing span {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4caf50;
+    margin: 0 2px;
+    animation: typing 1.4s infinite;
+}
+
+.cropwise-typing span:nth-child(2) { animation-delay: 0.2s; }
+.cropwise-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-10px); }
+}
+
+.cropwise-chat-input {
+    padding: 15px 20px;
+    background: white;
+    border-top: 2px solid #e0e0e0;
+    border-radius: 0 0 20px 20px;
+}
+
+.cropwise-quick-btns {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.cropwise-quick-btn {
+    padding: 8px 14px;
+    background: #e8f5e9;
+    border: 1px solid #4caf50;
+    color: #2e7d32;
+    border-radius: 18px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.3s;
+}
+
+.cropwise-quick-btn:hover {
+    background: #4caf50;
+    color: white;
+}
+
+.cropwise-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.cropwise-input-field {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #4caf50;
+    border-radius: 25px;
+    font-size: 0.95rem;
+    outline: none;
+}
+
+.cropwise-input-field:focus {
+    border-color: #2e7d32;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.cropwise-icon-btn {
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: all 0.3s;
+}
+
+.cropwise-img-btn {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.cropwise-img-btn:hover {
+    background: #1976d2;
+    color: white;
+}
+
+.cropwise-send-btn {
+    background: linear-gradient(135deg, #4caf50, #66bb6a);
+    color: white;
+}
+
+.cropwise-send-btn:hover {
+    transform: scale(1.1);
+}
+
+@media (max-width: 480px) {
+    .cropwise-chat-window {
+        width: calc(100vw - 20px);
+        height: calc(100vh - 100px);
+        right: 10px;
+        bottom: 90px;
+    }
+}
+</style>
+
+<!-- Chat Bubble -->
+<div class="cropwise-chat-bubble" onclick="toggleCropwiseChat()">
+    <span class="cropwise-chat-bubble-icon">🌾</span>
+</div>
+
+<!-- Chat Window -->
+<div class="cropwise-chat-window" id="cropwiseChatWindow">
+    <div class="cropwise-chat-header">
+        <div class="cropwise-chat-title">🤖 FarmBot Assistant</div>
+        <button class="cropwise-chat-close" onclick="toggleCropwiseChat()">✕</button>
+    </div>
+    
+    <div class="cropwise-chat-messages" id="cropwiseChatMessages">
+        <div class="cropwise-message bot">
+            <div class="cropwise-message-content">
+                Hi! 👋 I'm your farming assistant. Ask me about:
+                <br>• Crop advice
+                <br>• Fertilizer tips
+                <br>• Disease detection (upload image 📷)
+                <br>• Pest control
+            </div>
+        </div>
+        <div class="cropwise-typing" id="cropwiseTyping">
+            <span></span><span></span><span></span>
+        </div>
+    </div>
+    
+    <div class="cropwise-chat-input">
+        <div class="cropwise-quick-btns">
+            <button class="cropwise-quick-btn" onclick="sendCropwiseQuick('What crops should I plant now?')">🌱 Crops</button>
+            <button class="cropwise-quick-btn" onclick="sendCropwiseQuick('Suggest fertilizer for tomato')">💊 Fertilizer</button>
+            <button class="cropwise-quick-btn" onclick="sendCropwiseQuick('Pest control tips')">🐛 Pests</button>
+        </div>
+        
+        <div class="cropwise-input-row">
+            <input type="file" id="cropwiseImageInput" accept="image/*" style="display:none" onchange="handleCropwiseImage(event)">
+            <button class="cropwise-icon-btn cropwise-img-btn" onclick="document.getElementById('cropwiseImageInput').click()">📷</button>
+            <input type="text" class="cropwise-input-field" id="cropwiseMessageInput" placeholder="Ask anything..." onkeypress="if(event.key==='Enter') sendCropwiseMessage()">
+            <button class="cropwise-icon-btn cropwise-send-btn" onclick="sendCropwiseMessage()">✈️</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const CROPWISE_API_URL = 'http://localhost:5000/api';
+let cropwiseSelectedImage = null;
+
+function toggleCropwiseChat() {
+    document.getElementById('cropwiseChatWindow').classList.toggle('active');
+}
+
+function addCropwiseMessage(text, isUser) {
+    const messagesDiv = document.getElementById('cropwiseChatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `cropwise-message ${isUser ? 'user' : 'bot'}`;
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'cropwise-message-content';
+    contentDiv.innerHTML = text.replace(/\n/g, '<br>');
+    messageDiv.appendChild(contentDiv);
+    messagesDiv.appendChild(messageDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+function showCropwiseTyping() {
+    document.getElementById('cropwiseTyping').style.display = 'block';
+    document.getElementById('cropwiseChatMessages').scrollTop = document.getElementById('cropwiseChatMessages').scrollHeight;
+}
+
+function hideCropwiseTyping() {
+    document.getElementById('cropwiseTyping').style.display = 'none';
+}
+
+async function sendCropwiseMessage() {
+    const input = document.getElementById('cropwiseMessageInput');
+    const message = input.value.trim();
+    if (!message && !cropwiseSelectedImage) return;
+    
+    addCropwiseMessage(message || '📷 Analyzing image...', true);
+    input.value = '';
+    showCropwiseTyping();
+    
+    try {
+        let response;
+        if (cropwiseSelectedImage) {
+            response = await fetch(`${CROPWISE_API_URL}/chat/image`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message || 'Identify disease and suggest treatment', image: cropwiseSelectedImage })
+            });
+        } else {
+            response = await fetch(`${CROPWISE_API_URL}/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            });
+        }
+        
+        const data = await response.json();
+        hideCropwiseTyping();
+        
+        if (data.success) {
+            addCropwiseMessage(data.response, false);
+        } else {
+            addCropwiseMessage('Sorry, something went wrong. Please try again.', false);
+        }
+    } catch (error) {
+        hideCropwiseTyping();
+        addCropwiseMessage('⚠️ Cannot connect to server. Make sure backend is running on port 5000.', false);
+    }
+    
+    cropwiseSelectedImage = null;
+}
+
+function sendCropwiseQuick(message) {
+    document.getElementById('cropwiseMessageInput').value = message;
+    sendCropwiseMessage();
+}
+
+function handleCropwiseImage(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+        alert('Image too large! Max 5MB.');
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        cropwiseSelectedImage = e.target.result;
+        addCropwiseMessage('📷 Image selected! Click send to analyze.', true);
+    };
+    reader.readAsDataURL(file);
+}
+</script>
+{% block content %}
+<section class="hero">
+    <div class="container">
+        <h1>👩‍🌾 कृषी सरकारी योजना माहिती</h1>
+        <p>Government schemes and benefits for farmers in Maharashtra</p>
+    </div>
+</section>
+
+<section class="market-section">
+    <div class="container">
+        <!-- Introduction -->
+        <div class="card">
+            <p style="font-size: 16px; line-height: 1.8; color: #666;">
+                शेतकरी वर्गासाठी राज्य शासनातर्फे अनेक योजना उपलब्ध आहेत. माती, बियाणे, सिंचन, यंत्रे, तंत्रज्ञान, पत, विमा, 
+                पिकाला संरक्षण आणि विपणन हे शेतीशी संबंधित महत्वपूर्ण घटक आहेत. तुम्हाला याबाबत सहाय्य हवे असल्यास 
+                राज्य सरकारने देऊ केलेल्या विविध योजनांबाबत जाणून घ्या.
+            </p>
+            <p style="margin-top: 15px;">
+                अधिक माहितीसाठी 
+                <a href="https://www.manage.gov.in/fpoacademy/SGSchemes/maharashtra.pdf" target="_blank" style="color: #2e7d32; font-weight: bold;">
+                    येथे क्लिक करा
+                </a> सरकारी योजना - महाराष्ट्र.
+            </p>
+        </div>
+
+        <!-- Scheme 1: PM-KISAN -->
+        <div class="card scheme-card">
+            <h2 style="color: #2e7d32; margin-bottom: 15px;">1. प्रधानमंत्री किसान सन्मान निधी योजना (PM-KISAN) 🌱</h2>
+            
+            <p style="line-height: 1.8; color: #666; margin-bottom: 20px;">
+                प्रधानमंत्री किसान सन्मान निधी योजना (PM-KISAN) हा शेतकरी कल्याण योजना आहे. या योजनेअंतर्गत, सरकार दर वर्षी 
+                रु. 6000 थेट शेतकऱ्यांच्या खात्यात जमा करते. 4 महिन्यांच्या अंतराने हा रक्कम तीन हप्त्यांमध्ये दिला जातो.
+            </p>
+
+            <div class="scheme-section">
+                <h3>⏳ उद्दिष्टे:</h3>
+                <ul>
+                    <li>लहान आणि मर्यादित शेतकऱ्यांना आर्थिक मदत</li>
+                    <li>शेतकऱ्यांची उत्पन्नवाढ</li>
+                    <li>शेतकऱ्यांना आत्मनिर्भर बनवणे</li>
+                    <li>शेतकऱ्यांचा जीवनमान सुधारणे</li>
+                </ul>
+            </div>
+
+            <div class="scheme-section">
+                <h3>👥 पात्रता (Eligibility):</h3>
+                <ul>
+                    <li>सर्व लहान आणि मध्यम शेतकरी कुटुंबे</li>
+                    <li>२ हेक्टरपर्यंत जमीन असणारे शेतकरी</li>
+                </ul>
+            </div>
+
+            <div class="scheme-section">
+                <h3>📝 आवश्यक कागदपत्रे:</h3>
+                <ul>
+                    <li>आधार कार्ड</li>
+                    <li>बँक खाते तपशील</li>
+                    <li>जमीनधारकाचा 7/12 उतारा</li>
+                </ul>
+            </div>
+
+            <div class="scheme-section">
+                <h3>📝 अर्ज करण्यासाठी:</h3>
+                <a href="https://pmkisan.gov.in/" target="_blank" class="scheme-link">
+                    🔗 PM-KISAN Official Website
+                </a>
+            </div>
+        </div>
+
+        <!-- Scheme 2: PMFBY -->
+        <div class="card scheme-card">
+            <h2 style="color: #2e7d32; margin-bottom: 15px;">2. प्रधानमंत्री फसल बीमा योजना (PMFBY) 🌾</h2>
+            
+            <p style="line-height: 1.8; color: #666; margin-bottom: 20px;">
+                प्रधानमंत्री फसल बीमा योजना शेतकऱ्यांना नैसर्गिक आपत्ती, कीड, रोग इत्यादीमुळे होणाऱ्या पिकांच्या नुकसानीपासून 
+                आर्थिक संरक्षण देणारी योजना आहे. सरकारकडून शेतकऱ्यांना बीमा प्रीमियमवर सवलत दिली जाते.
+            </p>
+
+            <div class="scheme-section">
+                <h3>⏳ उद्दिष्टे:</h3>
+                <ul>
+                    <li>शेतकऱ्यांना नैसर्गिक आपत्तीमुळे होणाऱ्या पिकांच्या नुकसानीपासून संरक्षण</li>
+                    <li>शेतकऱ्यांची आर्थिक सुरक्षितता</li>
+                    <li>शेतकऱ्यांचे उत्पन्न स्थिर करणे</li>
+                </ul>
+            </div>
+
+            <div class="scheme-section">
+                <h3>👥 पात्रता:</h3>
+                <ul>
+                    <li>सर्व शेतकरी (जमीन धारक आणि भाडेकरू)</li>
+                    <li>विविध प्रकारच्या पिकांची लागवड करणारे शेतकरी</li>
+                </ul>
+            </div>
+
+            <div class="scheme-section">
+                <h3>📝 अर्ज करण्यासाठी:</h3>
+                <a href="https://pmfby.gov.in/" target="_blank" class="scheme-link">
+                    🔗 PMFBY Official Website
+                </a>
+            </div>
+        </div>
+
+        <!-- Scheme 3: PMKSY -->
+        <div class="card scheme-card">
+            <h2 style="color: #2e7d32; margin-bottom: 15px;">3. प्रधानमंत्री कृषी सिंचन योजना (PMKSY) 🚜</h2>
+            
+            <p style="line-height: 1.8; color: #666; margin-bottom: 20px;">
+                प्रधानमंत्री कृषी सिंचन योजना हा केंद्र पुरस्कृत कार्यक्रम आहे जो शेतकऱ्यांना मायक्रो-इरीगेशन सिस्टिम 
+                बसविण्यासाठी आर्थिक सहाय्य देतो.
+            </p>
+
+            <div class="scheme-section">
+                <h3>⏳ उद्दिष्टे:</h3>
+                <ul>
+                    <li>मायक्रो-इरीगेशन सिस्टमचा वापर वाढवणे</li>
+                    <li>पाण्याचा कार्यक्षम वापर सुधारणे</li>
+                    <li>पीक उत्पादनात वाढ</li>
+                </ul>
+            </div>
+
+            <div class="scheme-section">
+                <h3>📝 अर्ज करण्यासाठी:</h3>
+                <a href="https://pmksy.gov.in/" target="_blank" class="scheme-link">
+                    🔗 PMKSY Official Website
+                </a>
+            </div>
+        </div>
+
+        <!-- Scheme 4: PM-KMY -->
+        <div class="card scheme-card">
+            <h2 style="color: #2e7d32; margin-bottom: 15px;">4. प्रधानमंत्री किसान मानधन योजना (PM-KMY) 👨‍🌾</h2>
+            
+            <p style="line-height: 1.8; color: #666; margin-bottom: 20px;">
+                प्रधानमंत्री किसान मानधन योजना ही शेतकऱ्यांसाठी वृद्धावस्था संरक्षण आणि सामाजिक सुरक्षा योजना आहे. 
+                या योजनेतून शेतकऱ्यांना ६० वर्षांच्या नंतर दरमहा रु. 3000 पेन्शन दिली जाते.
+            </p>
+
+            <div class="scheme-section">
+                <h3>👥 पात्रता:</h3>
+                <ul>
+                    <li>वय 18 ते 40 वर्षे असणारे लहान शेतकरी</li>
+                    <li>अधिकतम २ हेक्टरपर्यंत जमीन धारक</li>
+                </ul>
+            </div>
+
+            <div class="scheme-section">
+                <h3>📝 अर्ज करण्यासाठी:</h3>
+                <a href="https://pmkmy.gov.in/" target="_blank" class="scheme-link">
+                    🔗 PM-KMY Official Website
+                </a>
+            </div>
+        </div>
+
+        <!-- Scheme 5: eNAM -->
+        <div class="card scheme-card">
+            <h2 style="color: #2e7d32; margin-bottom: 15px;">5. राष्ट्रीय कृषी बाजार - eNAM 🌐</h2>
+            
+            <p style="line-height: 1.8; color: #666; margin-bottom: 20px;">
+                नॅशनल ॲग्रीकल्चर मार्केट किंवा ई-नाम हा भारतातील कृषी उत्पादनासाठीचा ऑनलाइन खरेदी – विक्री मंच आहे. 
+                हा मंच शेतकरी, व्यापारी आणि खरेदीदारांना उत्पादनाचे ऑनलाइन व्यवहार करण्याची सुविधा प्रदान करतो.
+            </p>
+
+            <div class="scheme-section">
+                <a href="https://www.msamb.com/Schemes/NationalAgricultureMarket" target="_blank" class="scheme-link">
+                    🔗 eNAM Portal
+                </a>
+            </div>
+        </div>
+
+        <!-- Additional Info -->
+        <div class="card" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);">
+            <h3 style="color: #2e7d32; text-align: center; margin-bottom: 15px;">📞 संपर्क माहिती</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; text-align: center;">
+                <div>
+                    <p><strong>📞 फोन:</strong> 123-456-7890</p>
+                </div>
+                <div>
+                    <p><strong>📧 ई-मेल:</strong> agropulse@gmail.com</p>
+                </div>
+                <div>
+                    <p><strong>🏢 पत्ता:</strong> नागपुर, महाराष्ट्र</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.scheme-card {
+    margin-bottom: 30px;
+    border-left: 5px solid #2e7d32;
+}
+
+.scheme-section {
+    margin: 20px 0;
+}
+
+.scheme-section h3 {
+    color: #2e7d32;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.scheme-section ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.scheme-section li {
+    padding: 8px 0;
+    padding-left: 30px;
+    position: relative;
+    color: #666;
+    line-height: 1.6;
+}
+
+.scheme-section li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #2e7d32;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.scheme-link {
+    display: inline-block;
+    background: linear-gradient(90deg, #2e7d32 0%, #4caf50 100%);
+    color: white;
+    padding: 12px 30px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: transform 0.3s;
+}
+
+.scheme-link:hover {
+    transform: scale(1.05);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}Price Forecasting - AgroPulse{% endblock %}
+
+{% block content %}
+<div class="forecasting-container page-transition">
+    <div class="page-header">
+        <h1 class="page-title">
+            🔮 AgroPulse Crop Price Forecasting
+        </h1>
+        <p class="page-subtitle">Predict future crop prices using advanced ARIMA machine learning models</p>
+    </div>
+
+    <!-- Selection Controls with Combo Boxes -->
+    <div class="controls-section">
+        <div class="card">
+            <h3 style="color: #2e7d32; margin-bottom: 25px; font-size: 1.3rem;">
+                🔍 Select Crop, District, and Target Date
+            </h3>
+            
+            <div class="form-grid">
+                <!-- Crop Combo Box -->
+                <div class="combo-box-wrapper">
+                    <label for="commodity-input">🌾 Crop Name:</label>
+                    <div class="combo-box-container">
+                        <input 
+                            type="text" 
+                            id="commodity-input" 
+                            class="combo-box-input"
+                            placeholder="Type or select a crop (e.g., Onion, Tomato)..."
+                            autocomplete="off"
+                        >
+                        <span class="combo-box-arrow">▼</span>
+                        <div id="commodity-dropdown" class="combo-box-dropdown"></div>
+                    </div>
+                    <small style="color: #666;">💡 Type to search or click to see all agricultural crops</small>
+                </div>
+                
+                <!-- District Combo Box -->
+                <div class="combo-box-wrapper">
+                    <label for="district-input">📍 District Name:</label>
+                    <div class="combo-box-container">
+                        <input 
+                            type="text" 
+                            id="district-input" 
+                            class="combo-box-input"
+                            placeholder="Type or select a district (e.g., Pune, Nashik)..."
+                            autocomplete="off"
+                        >
+                        <span class="combo-box-arrow">▼</span>
+                        <div id="district-dropdown" class="combo-box-dropdown"></div>
+                    </div>
+                    <small style="color: #666;">💡 Type to search or click to see all Maharashtra districts</small>
+                </div>
+            </div>
+
+            <!-- Target Date -->
+            <div class="form-group" style="margin-top: 20px;">
+                <label for="target-date" style="font-weight: 600; color: #2e7d32; margin-bottom: 8px; display: block;">
+                    📅 Target Forecast Date:
+                </label>
+                <input 
+                    type="date" 
+                    id="target-date" 
+                    class="select-box" 
+                    value="2026-11-01" 
+                    min="{{ today }}" 
+                    max="2027-12-31"
+                    style="max-width: 400px;"
+                >
+                <small style="color: #666; display: block; margin-top: 8px;">
+                    ℹ️ Default: November 1, 2026 (Select any future date up to Dec 2027)
+                </small>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons" style="display: flex; gap: 15px; justify-content: center; margin-top: 30px; flex-wrap: wrap;">
+                <button onclick="generateForecast()" class="btn-primary">
+                    🔮 Generate AI Forecast
+                </button>
+                <button onclick="exportForecastData()" class="btn-secondary" id="export-btn">
+                    📊 Export Data (CSV)
+                </button>
+                <button onclick="clearForm()" class="btn-secondary">
+                    🔄 Clear Form
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading" class="loading-container" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h3>🤖 AI is analyzing agricultural data...</h3>
+            <p>Processing 10 years of market price data with ARIMA model</p>
+            <div class="loading-progress">
+                <div class="progress-bar"></div>
+            </div>
+            <small style="color: #666; margin-top: 10px;">⏱️ This may take 10-30 seconds</small>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="error" class="error-container" style="display: none;"></div>
+
+    <!-- Results Section -->
+    <div id="results" class="results-section" style="display: none;"></div>
+
+    <!-- Model Information -->
+    <div class="model-info-section" style="margin-top: 40px;">
+        <div class="card">
+            <h4 style="color: #2e7d32; margin-bottom: 20px; font-size: 1.3rem;">
+                ℹ️ About the AI Forecast Model
+            </h4>
+            <p style="line-height: 1.8; color: #666; margin-bottom: 20px;">
+                This forecast is powered by <strong>ARIMA (AutoRegressive Integrated Moving Average)</strong>,
+                a sophisticated time-series machine learning model that analyzes historical agricultural market price patterns from the last 10 years.
+            </p>
+            
+            <div class="features-grid" style="margin-top: 25px;">
+                <div class="feature-card" style="padding: 25px; border: 2px solid #4caf50;">
+                    <div class="feature-icon" style="font-size: 3rem;">🌾</div>
+                    <h5 style="color: #2e7d32; margin-bottom: 10px;">Agricultural Focus</h5>
+                    <p style="font-size: 0.9rem; color: #666;">Specialized for crop market predictions</p>
+                </div>
+                
+                <div class="feature-card" style="padding: 25px; border: 2px solid #4caf50;">
+                    <div class="feature-icon" style="font-size: 3rem;">📊</div>
+                    <h5 style="color: #2e7d32; margin-bottom: 10px;">Historical Analysis</h5>
+                    <p style="font-size: 0.9rem; color: #666;">Analyzes seasonal farming trends</p>
+                </div>
+                
+                <div class="feature-card" style="padding: 25px; border: 2px solid #4caf50;">
+                    <div class="feature-icon" style="font-size: 3rem;">🎯</div>
+                    <h5 style="color: #2e7d32; margin-bottom: 10px;">Price Prediction</h5>
+                    <p style="font-size: 0.9rem; color: #666;">Accurate mandi price forecasts</p>
+                </div>
+            </div>
+            
+            <div class="disclaimer" style="background: #e8f5e9; border: 2px solid #4caf50; padding: 20px; border-radius: 12px; margin-top: 25px;">
+                <strong style="color: #2e7d32;">⚠️ Important Disclaimer:</strong>
+                <p style="color: #1b5e20; margin-top: 10px; line-height: 1.6;">
+                    These agricultural price forecasts are for informational purposes only. Actual mandi prices may vary 
+                    due to weather conditions, government policies, global market dynamics, and unforeseen agricultural events. 
+                    Always consult with agricultural experts before making major farming decisions.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+/* Additional Forecasting Styles - Agriculture Green Theme */
+.forecasting-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 40px;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.page-title {
+    color: #1b5e20;
+    font-size: 2.8rem;
+    margin-bottom: 15px;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(27, 94, 32, 0.1);
+}
+
+.page-subtitle {
+    color: #4caf50;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.loading-container {
+    text-align: center;
+    padding: 60px 20px;
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    border-radius: 20px;
+    margin: 30px 0;
+    box-shadow: 0 4px 20px rgba(46, 125, 50, 0.2);
+    border: 2px solid #4caf50;
+}
+
+.loading-spinner {
+    width: 70px;
+    height: 70px;
+    border: 5px solid #c8e6c9;
+    border-top: 5px solid #2e7d32;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 25px;
+}
+
+.loading-progress {
+    width: 400px;
+    max-width: 90%;
+    height: 8px;
+    background: #c8e6c9;
+    border-radius: 10px;
+    margin: 25px auto;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #2e7d32, #4caf50, #66bb6a);
+    border-radius: 10px;
+    animation: progress 3s ease-in-out infinite;
+}
+
+@keyframes progress {
+    0% { width: 0%; }
+    50% { width: 70%; }
+    100% { width: 100%; }
+}
+
+.error-container {
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    border: 2px solid #ef5350;
+    border-radius: 20px;
+    padding: 40px;
+    margin: 30px 0;
+    text-align: center;
+}
+
+.error-content i {
+    font-size: 4rem;
+    color: #c62828;
+    margin-bottom: 20px;
+}
+
+/* Green Agriculture Theme Overrides */
+.card {
+    border: 1px solid #c8e6c9;
+}
+
+.card::before {
+    background: linear-gradient(90deg, #2e7d32, #4caf50, #66bb6a);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2e7d32, #4caf50);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1b5e20, #2e7d32);
+}
+
+.btn-secondary {
+    border-color: #4caf50;
+    color: #2e7d32;
+}
+
+.btn-secondary:hover {
+    background: #4caf50;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 2rem;
+    }
+    
+    .page-subtitle {
+        font-size: 1rem;
+    }
+    
+    .loading-progress {
+        width: 90%;
+    }
+}
+</style>
+
+<!-- Hidden data for combo boxes -->
+<script>
+    const commodities = {{ commodities|tojson }};
+    const districts = {{ districts|tojson }};
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/combo-box.js') }}"></script>
+<script src="{{ url_for('static', filename='js/enhanced_forecasting.js') }}"></script>
+{% endblock %}

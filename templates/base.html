@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AgroPulse{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>🌾 AgroPulse</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/">🏠 Home</a></li>
+                <li><a href="/market">📊 Market</a></li>
+                <li><a href="/forecasting">🔮 Forecasting</a></li>
+                <li><a href="/weather">🌦️ Weather</a></li>
+                <li><a href="/videos">🎥 Videos</a></li>
+                <li><a href="/news">📰 News</a></li>
+                <li><a href="/schemes">🏛️ Schemes</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 AgroPulse. Made with 💚 for farmers</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

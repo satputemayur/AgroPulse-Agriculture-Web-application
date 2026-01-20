@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}News - AgroPulse{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="container">
+        <h1>📰 Agriculture News - Maharashtra</h1>
+        <p>Stay updated with latest agriculture news and trends</p>
+    </div>
+</section>
+
+<section class="market-section">
+    <div class="container">
+        <!-- News Header -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="color: #2e7d32; margin: 0;">📰 Latest News</h3>
+                <button onclick="fetchNews()" class="btn-primary" style="padding: 10px 25px;">
+                    🔄 Refresh News
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" style="display:block; text-align: center; padding: 60px 20px;">
+            <div class="spinner"></div>
+            <p style="color: #666; margin-top: 20px;">📡 Loading news articles...</p>
+        </div>
+
+        <!-- Error -->
+        <div id="error" style="display:none;"></div>
+
+        <!-- News Container -->
+        <div id="newsContainer" style="margin-top: 30px;"></div>
+    </div>
+</section>
+
+<style>
+.spinner {
+    border: 4px solid rgba(46, 125, 50, 0.1);
+    border-top: 4px solid #2e7d32;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.news-card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+}
+
+.news-card:hover {
+    transform: translateY(-5px);
+}
+
+.news-header {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.news-image {
+    width: 250px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.news-content {
+    flex: 1;
+}
+
+.news-title {
+    color: #2e7d32;
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.news-meta {
+    color: #999;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.news-description {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.news-link {
+    display: inline-block;
+    background: #2e7d32;
+    color: white;
+    padding: 8px 20px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background 0.3s;
+}
+
+.news-link:hover {
+    background: #1b5e20;
+}
+
+.error-card {
+    background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
+    padding: 40px;
+    border-radius: 15px;
+    text-align: center;
+    margin: 30px 0;
+}
+
+.error-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+}
+
+.error-card h3 {
+    color: #f57f17;
+    margin-bottom: 10px;
+}
+
+.error-card p {
+    color: #666;
+    font-size: 16px;
+}
+
+@media (max-width: 768px) {
+    .news-header {
+        flex-direction: column;
+    }
+    
+    .news-image {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+// Load news on page load
+document.addEventListener('DOMContentLoaded', function() {
+    fetchNews();
+});
+
+async function fetchNews() {
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('newsContainer').innerHTML = '';
+    document.getElementById('error').style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/news/fetch');
+        const data = await response.json();
+        
+        document.getElementById('loading').style.display = 'none';
+        
+        if (data.success && data.articles.length > 0) {
+            displayNews(data.articles);
+            showToast('✅ News loaded successfully!', 'success');
+        } else {
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').innerHTML = `
+                <div class="error-card">
+                    <div class="error-icon">⚠️</div>
+                    <h3>No News Found</h3>
+                    <p>Unable to fetch news articles. Please try again later.</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').innerHTML = `
+            <div class="error-card">
+                <div class="error-icon">❌</div>
+                <h3>Error</h3>
+                <p>Failed to load news. Please check your connection and try again.</p>
+            </div>
+        `;
+        showToast('❌ Error loading news', 'error');
+    }
+}
+
+function displayNews(articles) {
+    const container = document.getElementById('newsContainer');
+    container.innerHTML = '';
+    
+    articles.forEach(article => {
+        const newsCard = document.createElement('div');
+        newsCard.className = 'news-card';
+        
+        const publishedDate = new Date(article.publishedAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        
+        newsCard.innerHTML = `
+            <div class="news-header">
+                ${article.urlToImage ? `<img src="${article.urlToImage}" alt="${article.title}" class="news-image" onerror="this.style.display='none'">` : ''}
+                <div class="news-content">
+                    <div class="news-title">${article.title}</div>
+                    <div class="news-meta">
+                        📰 ${article.source.name} • 📅 ${publishedDate}
+                    </div>
+                    <div class="news-description">
+                        ${article.description || 'No description available.'}
+                    </div>
+                    <a href="${article.url}" target="_blank" class="news-link">📖 Read Full Article</a>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(newsCard);
+    });
+}
+
+
+
+</script>
+{% endblock %}

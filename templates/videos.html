@@ -1,0 +1,550 @@
+{% extends "base.html" %}
+
+{% block title %}Video Tutorials - AgroPulse{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="container">
+        <h1>🎥 शेती व्हिडिओ ट्यूटोरियल</h1>
+        <p>Learn modern agricultural and farming techniques through expert video tutorials in Marathi</p>
+    </div>
+</section>
+
+<section class="market-section">
+    <div class="container page-transition">
+        <!-- Crop Selection Card with Dropdown -->
+        <div class="card" style="border: 2px solid #4caf50;">
+            <h3 style="color: #2e7d32; margin-bottom: 25px; font-size: 1.3rem;">
+                🌾 पीक निवडा - Select Agricultural Crop
+            </h3>
+            
+            <div class="form-group" style="max-width: 600px; margin: 0 auto;">
+                <label for="crop-select" style="color: #2e7d32; font-weight: 600; margin-bottom: 10px; display: block;">
+                    🌱 Crop/Vegetable Name:
+                </label>
+                <div style="position: relative;">
+                    <input 
+                        type="text" 
+                        id="crop-search" 
+                        class="form-control"
+                        placeholder="Type to search (e.g., भात, Rice, टोमॅटो, Tomato)..."
+                        autocomplete="off"
+                        style="padding-right: 40px;"
+                    >
+                    <span style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #4caf50; font-size: 1.2rem;">🔍</span>
+                    <div id="crop-dropdown" class="dropdown-list"></div>
+                </div>
+                <small style="color: #666; margin-top: 5px; display: block;">
+                    💡 Type crop name in Marathi (मराठी) or English to search farming videos
+                </small>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <button onclick="searchVideos()" class="btn-primary">
+                    🔍 Search Farming Videos
+                </button>
+                <button onclick="clearVideoForm()" class="btn-secondary">
+                    🔄 Clear Selection
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" style="display:none; text-align: center; padding: 60px 20px;">
+            <div class="spinner" style="border-color: #c8e6c9; border-top-color: #2e7d32;"></div>
+            <p style="color: #2e7d32; margin-top: 20px; font-size: 1.1rem; font-weight: 600;">
+                📡 Searching YouTube for agricultural videos...
+            </p>
+        </div>
+
+        <!-- Error -->
+        <div id="error" style="display:none;"></div>
+
+        <!-- Videos Results -->
+        <div id="videosResults" style="display:none;">
+            <div class="card" style="margin-top: 40px; border: 2px solid #4caf50;">
+                <h3 style="color: #2e7d32; margin-bottom: 30px; font-size: 1.5rem; text-align: center;">
+                    📹 शेती व्हिडिओ ट्यूटोरियल - Agricultural Video Tutorials
+                </h3>
+                <div id="videosContainer" class="videos-grid"></div>
+            </div>
+        </div>
+
+        <!-- Educational Info -->
+        <div class="card" style="margin-top: 40px; background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 2px solid #4caf50;">
+            <h4 style="color: #2e7d32; margin-bottom: 15px; font-size: 1.2rem;">📚 Learn About:</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div style="padding: 15px; background: white; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 2rem;">🌾</div>
+                    <p style="color: #2e7d32; font-weight: 600; margin-top: 10px;">Crop Cultivation</p>
+                </div>
+                <div style="padding: 15px; background: white; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 2rem;">💧</div>
+                    <p style="color: #2e7d32; font-weight: 600; margin-top: 10px;">Irrigation Methods</p>
+                </div>
+                <div style="padding: 15px; background: white; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 2rem;">🌿</div>
+                    <p style="color: #2e7d32; font-weight: 600; margin-top: 10px;">Organic Farming</p>
+                </div>
+                <div style="padding: 15px; background: white; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 2rem;">🚜</div>
+                    <p style="color: #2e7d32; font-weight: 600; margin-top: 10px;">Modern Techniques</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+/* Dropdown Styles */
+.dropdown-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 2px solid #4caf50;
+    border-radius: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+    z-index: 1000;
+    margin-top: 5px;
+    box-shadow: 0 8px 25px rgba(46, 125, 50, 0.2);
+}
+
+.dropdown-list.show {
+    display: block;
+}
+
+.dropdown-item {
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-bottom: 1px solid #e8f5e9;
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    color: #2e7d32;
+    font-weight: 600;
+}
+
+.dropdown-item.selected {
+    background: #4caf50;
+    color: white;
+    font-weight: 600;
+}
+
+/* Videos Grid */
+.videos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.video-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(46, 125, 50, 0.2);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    border: 2px solid #c8e6c9;
+}
+
+.video-card:hover {
+    transform: translateY(-15px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(46, 125, 50, 0.3);
+    border-color: #4caf50;
+}
+
+.video-thumbnail {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    transition: transform 0.4s;
+}
+
+.video-card:hover .video-thumbnail {
+    transform: scale(1.1);
+}
+
+.video-info {
+    padding: 20px;
+    background: linear-gradient(135deg, #f9f9f9 0%, #ffffff 100%);
+}
+
+.video-title {
+    color: #2e7d32;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 50px;
+}
+
+.video-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%);
+    color: white;
+    padding: 10px 24px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.video-link:hover {
+    background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(46, 125, 50, 0.4);
+}
+
+.error-card {
+    background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
+    padding: 50px;
+    border-radius: 20px;
+    text-align: center;
+    margin: 40px 0;
+    box-shadow: 0 8px 25px rgba(245, 127, 23, 0.2);
+    border: 2px solid #ffb74d;
+}
+
+.error-icon {
+    font-size: 5rem;
+    margin-bottom: 25px;
+    animation: bounce 1s infinite;
+}
+
+.error-card h3 {
+    color: #f57f17;
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+}
+
+.error-card p {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-15px);
+    }
+}
+
+/* Scrollbar Styling */
+.dropdown-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.dropdown-list::-webkit-scrollbar-track {
+    background: #e8f5e9;
+    border-radius: 10px;
+}
+
+.dropdown-list::-webkit-scrollbar-thumb {
+    background: #4caf50;
+    border-radius: 10px;
+}
+
+.dropdown-list::-webkit-scrollbar-thumb:hover {
+    background: #2e7d32;
+}
+
+@media (max-width: 768px) {
+    .videos-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .video-card {
+        max-width: 100%;
+    }
+}
+</style>
+
+<script>
+// Crops data from Flask
+const crops = {{ crops|tojson }};
+
+let selectedCrop = '';
+let filteredCrops = [];
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('crop-search');
+    const dropdown = document.getElementById('crop-dropdown');
+    
+    // Input event - filter crops
+    searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        
+        if (searchTerm.length === 0) {
+            dropdown.classList.remove('show');
+            filteredCrops = [];
+            return;
+        }
+        
+        // Filter crops based on search term
+        filteredCrops = crops.filter(crop => 
+            crop.toLowerCase().includes(searchTerm)
+        );
+        
+        displayDropdown(filteredCrops);
+    });
+    
+    // Focus event - show all crops if input is empty
+    searchInput.addEventListener('focus', function() {
+        if (this.value.trim() === '') {
+            filteredCrops = crops;
+            displayDropdown(filteredCrops);
+        }
+    });
+    
+    // Click outside to close dropdown
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('show');
+        }
+    });
+    
+    console.log('✅ Video search initialized with', crops.length, 'crops');
+});
+
+function displayDropdown(items) {
+    const dropdown = document.getElementById('crop-dropdown');
+    
+    if (items.length === 0) {
+        dropdown.innerHTML = `
+            <div class="dropdown-item" style="color: #999; cursor: default;">
+                ❌ No crops found
+            </div>
+        `;
+        dropdown.classList.add('show');
+        return;
+    }
+    
+    dropdown.innerHTML = '';
+    
+    items.slice(0, 10).forEach(crop => { // Show max 10 items
+        const item = document.createElement('div');
+        item.className = 'dropdown-item';
+        item.textContent = crop;
+        item.onclick = function() {
+            selectCrop(crop);
+        };
+        dropdown.appendChild(item);
+    });
+    
+    if (items.length > 10) {
+        const moreItem = document.createElement('div');
+        moreItem.className = 'dropdown-item';
+        moreItem.style.color = '#999';
+        moreItem.style.fontStyle = 'italic';
+        moreItem.textContent = `... and ${items.length - 10} more`;
+        dropdown.appendChild(moreItem);
+    }
+    
+    dropdown.classList.add('show');
+}
+
+function selectCrop(crop) {
+    selectedCrop = crop;
+    document.getElementById('crop-search').value = crop;
+    document.getElementById('crop-dropdown').classList.remove('show');
+    console.log('✅ Selected crop:', crop);
+}
+
+async function searchVideos() {
+    const searchInput = document.getElementById('crop-search');
+    const crop = searchInput.value.trim() || selectedCrop;
+    
+    if (!crop) {
+        showToast('⚠️ कृपया पीक निवडा! Please select a crop!', 'error');
+        searchInput.focus();
+        return;
+    }
+    
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('videosResults').style.display = 'none';
+    document.getElementById('error').style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/videos/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ crop: crop })
+        });
+        
+        const data = await response.json();
+        
+        document.getElementById('loading').style.display = 'none';
+        
+        if (data.success && data.videos.length > 0) {
+            displayVideos(data.videos, crop);
+            document.getElementById('videosResults').style.display = 'block';
+            showToast(`✅ Found ${data.videos.length} videos for ${crop}`, 'success');
+        } else {
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').innerHTML = `
+                <div class="error-card">
+                    <div class="error-icon">⚠️</div>
+                    <h3>No Videos Found</h3>
+                    <p>No agricultural/farming videos found for "${crop}".</p>
+                    <p style="margin-top: 10px; font-size: 0.95rem;">
+                        कृपया दुसरे पीक निवडा किंवा इंग्रजी नाव वापरा<br>
+                        Try another crop or use English name
+                    </p>
+                </div>
+            `;
+            showToast('⚠️ No videos found', 'warning');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error').innerHTML = `
+            <div class="error-card">
+                <div class="error-icon">❌</div>
+                <h3>Connection Error</h3>
+                <p>Failed to load videos. Please check your internet connection and try again.</p>
+                <p style="margin-top: 10px; font-size: 0.95rem;">
+                    इंटरनेट कनेक्शन तपासा आणि पुन्हा प्रयत्न करा
+                </p>
+            </div>
+        `;
+        showToast('❌ Error loading videos', 'error');
+    }
+}
+
+function displayVideos(videos, cropName) {
+    const container = document.getElementById('videosContainer');
+    container.innerHTML = `
+        <p style="text-align: center; color: #2e7d32; font-size: 1.1rem; margin-bottom: 20px;">
+            🎥 Showing <strong>${videos.length}</strong> videos for <strong>${cropName}</strong>
+        </p>
+    `;
+    
+    videos.forEach(function(video) {
+        const videoId = video.id.videoId;
+        const title = video.snippet.title;
+        const thumbnail = video.snippet.thumbnails.high.url;
+        const videoUrl = 'https://www.youtube.com/watch?v=' + videoId;
+        const channelTitle = video.snippet.channelTitle;
+        
+        const videoCard = document.createElement('div');
+        videoCard.className = 'video-card';
+        videoCard.innerHTML = `
+            <img src="${thumbnail}" alt="${title}" class="video-thumbnail" 
+                 onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'320\' height=\'180\'%3E%3Crect fill=\'%23c8e6c9\' width=\'320\' height=\'180\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' text-anchor=\'middle\' fill=\'%232e7d32\' font-size=\'20\'%3E🌾 Video%3C/text%3E%3C/svg%3E'">
+            <div class="video-info">
+                <div class="video-title">${title}</div>
+                <p style="color: #666; font-size: 0.85rem; margin-bottom: 15px;">
+                    📺 ${channelTitle}
+                </p>
+                <a href="${videoUrl}" target="_blank" class="video-link">
+                    ▶️ Watch on YouTube
+                </a>
+            </div>
+        `;
+        
+        container.appendChild(videoCard);
+    });
+}
+
+function clearVideoForm() {
+    document.getElementById('crop-search').value = '';
+    selectedCrop = '';
+    document.getElementById('crop-dropdown').classList.remove('show');
+    document.getElementById('videosResults').style.display = 'none';
+    document.getElementById('error').style.display = 'none';
+    showToast('🔄 Form cleared', 'info');
+}
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    const colors = {
+        success: '#4caf50',
+        error: '#f44336',
+        warning: '#ff9800',
+        info: '#2196f3'
+    };
+    
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: ${colors[type] || colors.info};
+        color: white;
+        padding: 15px 25px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        z-index: 10000;
+        font-weight: 600;
+        animation: slideIn 0.3s ease-out;
+    `;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Enter key support
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        const searchInput = document.getElementById('crop-search');
+        if (document.activeElement === searchInput) {
+            searchVideos();
+        }
+    }
+});
+
+// Add animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}
