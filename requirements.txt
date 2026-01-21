@@ -1,6 +1,6 @@
 Flask==3.0.0
-gunicorn
-pandas==2.1.3
-numpy
-statsmodels
+gunicorn==21.2.0
+pandas==2.1.4
+numpy<2.0
+statsmodels==0.14.1
 requests==2.31.0
